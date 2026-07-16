@@ -100,11 +100,11 @@ func (h *SellerHandler) InitializeOnboarding(w http.ResponseWriter, r *http.Requ
 
 	var input SellerOnboardingInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		input.Amount = 29.00
+		input.Amount = 8000.00
 	}
 
 	if input.Amount < 1 {
-		input.Amount = 29.00
+		input.Amount = 8000.00
 	}
 
 	reference := "SELLER-" + uuid.New().String()
