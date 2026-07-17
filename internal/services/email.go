@@ -74,7 +74,11 @@ func (s *EmailService) send(to, subject, htmlBody string) error {
 	})
 
 	addr := fmt.Sprintf("%s:%d", s.cfg.SMTPHost, s.cfg.SMTPPort)
-	err := smtp.SendMail(addr, auth, s.cfg.SMTPFrom, []string{to}, buf.Bytes())
+	from := s.cfg.SMTPUser
+	if from == "" {
+		from = s.cfg.SMTPFrom
+	}
+	err := smtp.SendMail(addr, auth, from, []string{to}, buf.Bytes())
 	if err != nil {
 		log.Printf("SMTP send error (to=%s): %v", to, err)
 	}

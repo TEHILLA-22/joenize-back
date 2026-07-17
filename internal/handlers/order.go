@@ -180,9 +180,11 @@ func (h *OrderHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var order models.Order
-	query := database.DB.First(&order, "id = ?", id)
+	var query *gorm.DB
 	if isSeller {
 		query = database.DB.First(&order, "id = ? AND seller_id = ?", id, userID)
+	} else {
+		query = database.DB.First(&order, "id = ? AND buyer_id = ?", id, userID)
 	}
 	if query.Error != nil {
 		utils.ErrorJSON(w, http.StatusNotFound, "Order not found")

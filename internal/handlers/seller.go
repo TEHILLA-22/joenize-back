@@ -99,13 +99,14 @@ func (h *SellerHandler) InitializeOnboarding(w http.ResponseWriter, r *http.Requ
 	}
 
 	var input SellerOnboardingInput
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		input.Amount = 8000
+	if r.Body != http.NoBody {
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+			utils.ErrorJSON(w, http.StatusBadRequest, "Invalid request body")
+			return
+		}
 	}
 
-	if input.Amount < 1 {
-		input.Amount = 8000
-	}
+	input.Amount = 8000.00
 
 	reference := "SELLER-" + uuid.New().String()
 
