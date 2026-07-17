@@ -57,7 +57,7 @@ func (s *EmailService) send(to, subject, htmlBody string) error {
 		return nil
 	}
 
-	auth := smtp.PlainAuth(s.cfg.SMTPUser, s.cfg.SMTPUser, s.cfg.SMTPPass, s.cfg.SMTPHost)
+	auth := smtp.PlainAuth("", s.cfg.SMTPUser, s.cfg.SMTPPass, s.cfg.SMTPHost)
 
 	var buf bytes.Buffer
 	tpl := template.Must(template.New("email").Parse(s.smtpTemplate()))

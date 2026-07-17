@@ -16,10 +16,12 @@ import (
 	"gorm.io/gorm"
 )
 
-type OrderHandler struct{}
+type OrderHandler struct {
+	notifHandler *NotificationHandler
+}
 
-func NewOrderHandler() *OrderHandler {
-	return &OrderHandler{}
+func NewOrderHandler(notifHandler *NotificationHandler) *OrderHandler {
+	return &OrderHandler{notifHandler: notifHandler}
 }
 
 func (h *OrderHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -154,6 +156,11 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Status:        "pending",
 		DueDate:       &dueDate,
 	})
+
+	if h.notifHandler != nil {
+		h.notifHandler.Notify(sellerID.String(), "New order received", fmt.Sprintf("Order %s has been placed for $%.2f", orderNumber, totalAmount), "success")
+		h.notifHandler.Notify(userID, "Order placed", fmt.Sprintf("Order %s has been placed successfully.", orderNumber), "success")
+	}
 
 	database.DB.Preload("Items").Preload("Invoice").First(&order, order.ID)
 	utils.JSON(w, http.StatusCreated, order)

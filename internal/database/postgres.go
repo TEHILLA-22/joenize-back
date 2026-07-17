@@ -37,6 +37,8 @@ func Migrate(db *gorm.DB) {
 		&models.CartItem{},
 		&models.RFQ{},
 		&models.RFQItem{},
+		&models.RFQImage{},
+		&models.RFQInvitation{},
 		&models.Quote{},
 		&models.Order{},
 		&models.OrderItem{},

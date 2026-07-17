@@ -67,7 +67,7 @@ func (h *PaymentHandler) InitializePayment(w http.ResponseWriter, r *http.Reques
 		"type":     "order_payment",
 	}
 
-	result, err := h.paystack.InitializeTransaction(user.Email, body.Amount, reference, metadata)
+	result, err := h.paystack.InitializeTransaction(user.Email, body.Amount, "NGN", reference, metadata)
 	if err != nil {
 		utils.ErrorJSON(w, http.StatusBadGateway, "Payment initialization failed: "+err.Error())
 		return

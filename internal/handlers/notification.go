@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/tehilla-22/b2b-api/internal/database"
 	"github.com/tehilla-22/b2b-api/internal/middleware"
 	"github.com/tehilla-22/b2b-api/internal/models"
@@ -73,6 +74,29 @@ func (h *NotificationHandler) removeClient(userID string, ch chan string) {
 		if c == ch {
 			h.clients[userID] = append(clients[:i], clients[i+1:]...)
 			break
+		}
+	}
+}
+
+func (h *NotificationHandler) Notify(userID, title, body, tone string) {
+	database.DB.Create(&models.Notification{
+		UserID: uuid.MustParse(userID),
+		Title:  title,
+		Body:   body,
+		Tone:   tone,
+	})
+
+	msg, _ := json.Marshal(map[string]string{
+		"id":    fmt.Sprintf("%d", len(h.clients[userID])),
+		"title": title,
+		"body":  body,
+		"tone":  tone,
+	})
+
+	for _, ch := range h.clients[userID] {
+		select {
+		case ch <- string(msg):
+		default:
 		}
 	}
 }

@@ -6,7 +6,20 @@ import (
 	"strings"
 
 	"github.com/tehilla-22/b2b-api/internal/utils"
+	"github.com/go-chi/chi/v5"
 )
+
+var allowedOrigins []string
+
+func InitCORS(r chi.Router, origins string) {
+	for _, o := range strings.Split(origins, ",") {
+		o = strings.TrimSpace(o)
+		if o != "" {
+			allowedOrigins = append(allowedOrigins, o)
+		}
+	}
+	r.Use(CORS)
+}
 
 type contextKey string
 
@@ -57,20 +70,36 @@ func SellerOnly(next http.Handler) http.Handler {
 	})
 }
 
-func CORS(allowOrigin string) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Access-Control-Allow-Origin", allowOrigin)
-			w.Header().Set("Access-Control-Allow-Credentials", "true")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Organization-ID")
+func CORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		origin := r.Header.Get("Origin")
 
-			if r.Method == http.MethodOptions {
-				w.WriteHeader(http.StatusOK)
-				return
+		allowed := ""
+		for _, o := range allowedOrigins {
+			if o == origin {
+				allowed = origin
+				break
 			}
+		}
+		if allowed == "" && len(allowedOrigins) > 0 {
+			allowed = allowedOrigins[0]
+		}
 
-			next.ServeHTTP(w, r)
-		})
-	}
+		if allowed != "" {
+			w.Header().Set("Access-Control-Allow-Origin", allowed)
+		}
+		if allowed == origin {
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+		}
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Organization-ID")
+		w.Header().Set("Access-Control-Max-Age", "86400")
+
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }

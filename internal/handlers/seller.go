@@ -100,11 +100,11 @@ func (h *SellerHandler) InitializeOnboarding(w http.ResponseWriter, r *http.Requ
 
 	var input SellerOnboardingInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		input.Amount = 29.00
+		input.Amount = 8000
 	}
 
 	if input.Amount < 1 {
-		input.Amount = 29.00
+		input.Amount = 8000
 	}
 
 	reference := "SELLER-" + uuid.New().String()
@@ -114,9 +114,9 @@ func (h *SellerHandler) InitializeOnboarding(w http.ResponseWriter, r *http.Requ
 		"type":    "seller_onboarding",
 	}
 
-	result, err := h.paystack.InitializeTransaction(user.Email, input.Amount, reference, metadata)
+	result, err := h.paystack.InitializeTransaction(user.Email, input.Amount, "NGN", reference, metadata)
 	if err != nil {
-		utils.ErrorJSON(w, http.StatusBadGateway, "Payment initialization failed")
+		utils.ErrorJSON(w, http.StatusBadGateway, "Payment initialization failed: "+err.Error())
 		return
 	}
 
@@ -174,12 +174,7 @@ func (h *SellerHandler) VerifyOnboarding(w http.ResponseWriter, r *http.Request)
 		"seller_paid": true,
 	})
 
-	database.DB.Create(&models.Notification{
-		UserID: uuid.MustParse(userID),
-		Title:  "Seller onboarding complete",
-		Body:   "Your seller onboarding payment has been confirmed. You can now create products and manage your storefront.",
-		Tone:   "success",
-	})
+	h.notificationHandler.Notify(userID, "Seller onboarding complete", "Your seller onboarding payment has been confirmed. You can now create products and manage your storefront.", "success")
 
 	var userForEmail models.User
 	database.DB.Select("email").First(&userForEmail, "id = ?", userID)

@@ -104,20 +104,44 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
+	var token string
+
 	cookie, err := r.Cookie("refresh_token")
-	if err != nil {
+	if err == nil && cookie.Value != "" {
+		token = cookie.Value
+	} else {
+		var body struct {
+			RefreshToken string `json:"refresh_token"`
+		}
+		if decodeErr := json.NewDecoder(r.Body).Decode(&body); decodeErr == nil && body.RefreshToken != "" {
+			token = body.RefreshToken
+		}
+	}
+
+	if token == "" {
 		utils.ErrorJSON(w, http.StatusUnauthorized, "No refresh token")
 		return
 	}
 
-	accessToken, err := h.authService.RefreshToken(cookie.Value)
+	accessToken, err := h.authService.RefreshToken(token)
 	if err != nil {
 		utils.ErrorJSON(w, http.StatusUnauthorized, "Invalid refresh token")
 		return
 	}
 
-	utils.JSON(w, http.StatusOK, map[string]string{
-		"access": accessToken,
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    token,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   h.cfg.AppEnv == "production",
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   7 * 24 * 3600,
+	})
+
+	utils.JSON(w, http.StatusOK, map[string]interface{}{
+		"access":        accessToken,
+		"refresh_token": token,
 	})
 }
 

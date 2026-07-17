@@ -21,11 +21,12 @@ type PaystackService struct {
 }
 
 type PaystackInitializeRequest struct {
-	Email     string  `json:"email"`
-	Amount    float64 `json:"amount"`
-	Reference string  `json:"reference"`
-	CallbackURL string `json:"callback_url"`
-	Metadata  map[string]interface{} `json:"metadata,omitempty"`
+	Email       string                 `json:"email"`
+	Amount      int64                  `json:"amount"`
+	Currency    string                 `json:"currency"`
+	Reference   string                 `json:"reference"`
+	CallbackURL string                 `json:"callback_url"`
+	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
 
 type PaystackInitializeResponse struct {
@@ -58,14 +59,15 @@ func NewPaystackService(cfg *config.Config) *PaystackService {
 	}
 }
 
-func (s *PaystackService) InitializeTransaction(email string, amount float64, reference string, metadata map[string]interface{}) (*PaystackInitializeResponse, error) {
+func (s *PaystackService) InitializeTransaction(email string, amount float64, currency string, reference string, metadata map[string]interface{}) (*PaystackInitializeResponse, error) {
 	if s.cfg.PaystackSecretKey == "" {
 		return nil, errors.New("paystack not configured")
 	}
 
 	body := PaystackInitializeRequest{
 		Email:       email,
-		Amount:      float64(amount * 100),
+		Amount:      int64(amount * 100),
+		Currency:    currency,
 		Reference:   reference,
 		CallbackURL: s.cfg.PaystackCallback,
 		Metadata:    metadata,

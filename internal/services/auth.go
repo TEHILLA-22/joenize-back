@@ -58,6 +58,7 @@ func (s *AuthService) Register(input RegisterInput) (*models.User, error) {
 		Email:        input.Email,
 		PasswordHash: string(hashedPassword),
 		IsBuyer:      true,
+		IsVerified:   false,
 	}
 
 	result := database.DB.Create(user)
